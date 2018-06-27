@@ -2,6 +2,7 @@
 // Created by florian on 05.08.15.
 //
 
+#pragma once
 #ifndef ART_OPTIMISTIC_LOCK_COUPLING_N_H
 #define ART_OPTIMISTIC_LOCK_COUPLING_N_H
 //#define ART_NOREADLOCK
@@ -9,8 +10,10 @@
 #include <stdint.h>
 #include <atomic>
 #include <string.h>
-#include "../Key.h"
-#include "../Epoche.h"
+#include <functional>
+#include "Key.h"
+
+namespace ART { }
 
 using TID = uint64_t;
 
@@ -91,12 +94,11 @@ namespace ART_OLC {
 
         static N *getChild(const uint8_t k, const N *node);
 
-        static void insertAndUnlock(N *node, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, N *val, bool &needRestart,
-                                    ThreadInfo &threadInfo);
+        static void insertAndUnlock(N *node, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, N *val, bool &needRestart);
 
         static bool change(N *node, uint8_t key, N *val);
 
-        static void removeAndUnlock(N *node, uint64_t v, uint8_t key, N *parentNode, uint64_t parentVersion, uint8_t keyParent, bool &needRestart, ThreadInfo &threadInfo);
+        static void removeAndUnlock(N *node, uint64_t v, uint8_t key, N *parentNode, uint64_t parentVersion, uint8_t keyParent, bool &needRestart);
 
         bool hasPrefix() const;
 
@@ -125,10 +127,10 @@ namespace ART_OLC {
         static std::tuple<N *, uint8_t> getSecondChild(N *node, const uint8_t k);
 
         template<typename curN, typename biggerN>
-        static void insertGrow(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, N *val, bool &needRestart, ThreadInfo &threadInfo);
+        static void insertGrow(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, N *val, bool &needRestart);
 
         template<typename curN, typename smallerN>
-        static void removeAndShrink(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, bool &needRestart, ThreadInfo &threadInfo);
+        static void removeAndShrink(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, bool &needRestart);
 
         static uint64_t getChildren(const N *node, uint8_t start, uint8_t end, std::tuple<uint8_t, N *> children[],
                                 uint32_t &childrenCount);

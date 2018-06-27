@@ -2,11 +2,17 @@
 #include <algorithm>
 #include "Tree.h"
 #include "N.cpp"
-#include "../Epoche.cpp"
-#include "../Key.h"
+#include "Key.h"
 
 
 namespace ART_OLC {
+
+    Tree::Tree() : root(new N256(nullptr, 0)) {
+    }
+
+    void Tree::setLoadKey(LoadKeyFunction f) {
+        loadKey = f;
+    }
 
     Tree::Tree(LoadKeyFunction loadKey) : root(new N256( nullptr, 0)), loadKey(loadKey) {
     }
@@ -16,12 +22,12 @@ namespace ART_OLC {
         N::deleteNode(root);
     }
 
-    ThreadInfo Tree::getThreadInfo() {
-        return ThreadInfo(this->epoche);
-    }
+    // ThreadInfo Tree::getThreadInfo() {
+    //     return ThreadInfo(this->epoche);
+    // }
 
-    TID Tree::lookup(const Key &k, ThreadInfo &threadEpocheInfo) const {
-        EpocheGuardReadonly epocheGuard(threadEpocheInfo);
+    TID Tree::lookup(const Key &k) const {
+        // EpocheGuardReadonly epocheGuard(threadEpocheInfo);
         restart:
         bool needRestart = false;
 
@@ -77,7 +83,7 @@ namespace ART_OLC {
     }
 
     bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, TID result[],
-                                std::size_t resultSize, std::size_t &resultsFound, ThreadInfo &threadEpocheInfo) const {
+                                std::size_t resultSize, std::size_t &resultsFound) const {
         for (uint32_t i = 0; i < std::min(start.getKeyLen(), end.getKeyLen()); ++i) {
             if (start[i] > end[i]) {
                 resultsFound = 0;
@@ -86,7 +92,7 @@ namespace ART_OLC {
                 break;
             }
         }
-        EpocheGuard epocheGuard(threadEpocheInfo);
+        // EpocheGuard epocheGuard(threadEpocheInfo);
         TID toContinue = 0;
         std::function<void(const N *)> copy = [&result, &resultSize, &resultsFound, &toContinue, &copy](const N *node) {
             if (N::isLeaf(node)) {
@@ -331,8 +337,8 @@ namespace ART_OLC {
         return 0;
     }
 
-    void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo) {
-        EpocheGuard epocheGuard(epocheInfo);
+    void Tree::insert(const Key &k, TID tid, bool* new_insert) {
+        // EpocheGuard epocheGuard(epocheInfo);
         restart:
         bool needRestart = false;
 
@@ -383,6 +389,7 @@ namespace ART_OLC {
                                     node->getPrefixLength() - ((nextLevel - level) + 1));
 
                     node->writeUnlock();
+                    if (new_insert) *new_insert = true;
                     return;
                 }
                 case CheckPrefixPessimisticResult::Match:
@@ -395,8 +402,9 @@ namespace ART_OLC {
             if (needRestart) goto restart;
 
             if (nextNode == nullptr) {
-                N::insertAndUnlock(node, v, parentNode, parentVersion, parentKey, nodeKey, N::setLeaf(tid), needRestart, epocheInfo);
+                N::insertAndUnlock(node, v, parentNode, parentVersion, parentKey, nodeKey, N::setLeaf(tid), needRestart);
                 if (needRestart) goto restart;
+                if (new_insert) *new_insert = true;
                 return;
             }
 
@@ -423,6 +431,7 @@ namespace ART_OLC {
                 n4->insert(key[level + prefixLength], nextNode);
                 N::change(node, k[level - 1], n4);
                 node->writeUnlock();
+                if (new_insert) *new_insert = false;
                 return;
             }
             level++;
@@ -430,8 +439,8 @@ namespace ART_OLC {
         }
     }
 
-    void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
-        EpocheGuard epocheGuard(threadInfo);
+    void Tree::remove(const Key &k, TID tid) {
+        // EpocheGuard epocheGuard(threadInfo);
         restart:
         bool needRestart = false;
 
@@ -492,7 +501,7 @@ namespace ART_OLC {
 
                                 parentNode->writeUnlock();
                                 node->writeUnlockObsolete();
-                                this->epoche.markNodeForDeletion(node, threadInfo);
+                                // this->epoche.markNodeForDeletion(node, threadInfo);
                             } else {
                                 secondNodeN->writeLockOrRestart(needRestart);
                                 if (needRestart) {
@@ -509,10 +518,10 @@ namespace ART_OLC {
                                 secondNodeN->writeUnlock();
 
                                 node->writeUnlockObsolete();
-                                this->epoche.markNodeForDeletion(node, threadInfo);
+                                // this->epoche.markNodeForDeletion(node, threadInfo);
                             }
                         } else {
-                            N::removeAndUnlock(node, v, k[level], parentNode, parentVersion, parentKey, needRestart, threadInfo);
+                            N::removeAndUnlock(node, v, k[level], parentNode, parentVersion, parentKey, needRestart);
                             if (needRestart) goto restart;
                         }
                         return;

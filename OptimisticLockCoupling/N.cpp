@@ -90,7 +90,7 @@ namespace ART_OLC {
     }
 
     template<typename curN, typename biggerN>
-    void N::insertGrow(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, N *val, bool &needRestart, ThreadInfo &threadInfo) {
+    void N::insertGrow(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, N *val, bool &needRestart) {
         if (!n->isFull()) {
             if (parentNode != nullptr) {
                 parentNode->readUnlockOrRestart(parentVersion, needRestart);
@@ -119,30 +119,30 @@ namespace ART_OLC {
         N::change(parentNode, keyParent, nBig);
 
         n->writeUnlockObsolete();
-        threadInfo.getEpoche().markNodeForDeletion(n, threadInfo);
+        // threadInfo.getEpoche().markNodeForDeletion(n, threadInfo);
         parentNode->writeUnlock();
     }
 
-    void N::insertAndUnlock(N *node, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, N *val, bool &needRestart, ThreadInfo &threadInfo) {
+    void N::insertAndUnlock(N *node, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, N *val, bool &needRestart) {
         switch (node->getType()) {
             case NTypes::N4: {
                 auto n = static_cast<N4 *>(node);
-                insertGrow<N4, N16>(n, v, parentNode, parentVersion, keyParent, key, val, needRestart, threadInfo);
+                insertGrow<N4, N16>(n, v, parentNode, parentVersion, keyParent, key, val, needRestart);
                 break;
             }
             case NTypes::N16: {
                 auto n = static_cast<N16 *>(node);
-                insertGrow<N16, N48>(n, v, parentNode, parentVersion, keyParent, key, val, needRestart, threadInfo);
+                insertGrow<N16, N48>(n, v, parentNode, parentVersion, keyParent, key, val, needRestart);
                 break;
             }
             case NTypes::N48: {
                 auto n = static_cast<N48 *>(node);
-                insertGrow<N48, N256>(n, v, parentNode, parentVersion, keyParent, key, val, needRestart, threadInfo);
+                insertGrow<N48, N256>(n, v, parentNode, parentVersion, keyParent, key, val, needRestart);
                 break;
             }
             case NTypes::N256: {
                 auto n = static_cast<N256 *>(node);
-                insertGrow<N256, N256>(n, v, parentNode, parentVersion, keyParent, key, val, needRestart, threadInfo);
+                insertGrow<N256, N256>(n, v, parentNode, parentVersion, keyParent, key, val, needRestart);
                 break;
             }
         }
@@ -202,7 +202,7 @@ namespace ART_OLC {
     }
 
     template<typename curN, typename smallerN>
-    void N::removeAndShrink(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, bool &needRestart, ThreadInfo &threadInfo) {
+    void N::removeAndShrink(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, bool &needRestart) {
         if (!n->isUnderfull() || parentNode == nullptr) {
             if (parentNode != nullptr) {
                 parentNode->readUnlockOrRestart(parentVersion, needRestart);
@@ -231,30 +231,30 @@ namespace ART_OLC {
         N::change(parentNode, keyParent, nSmall);
 
         n->writeUnlockObsolete();
-        threadInfo.getEpoche().markNodeForDeletion(n, threadInfo);
+        // threadInfo.getEpoche().markNodeForDeletion(n, threadInfo);
         parentNode->writeUnlock();
     }
 
-    void N::removeAndUnlock(N *node, uint64_t v, uint8_t key, N *parentNode, uint64_t parentVersion, uint8_t keyParent, bool &needRestart, ThreadInfo &threadInfo) {
+    void N::removeAndUnlock(N *node, uint64_t v, uint8_t key, N *parentNode, uint64_t parentVersion, uint8_t keyParent, bool &needRestart) {
         switch (node->getType()) {
             case NTypes::N4: {
                 auto n = static_cast<N4 *>(node);
-                removeAndShrink<N4, N4>(n, v, parentNode, parentVersion, keyParent, key, needRestart, threadInfo);
+                removeAndShrink<N4, N4>(n, v, parentNode, parentVersion, keyParent, key, needRestart);
                 break;
             }
             case NTypes::N16: {
                 auto n = static_cast<N16 *>(node);
-                removeAndShrink<N16, N4>(n, v, parentNode, parentVersion, keyParent, key, needRestart, threadInfo);
+                removeAndShrink<N16, N4>(n, v, parentNode, parentVersion, keyParent, key, needRestart);
                 break;
             }
             case NTypes::N48: {
                 auto n = static_cast<N48 *>(node);
-                removeAndShrink<N48, N16>(n, v, parentNode, parentVersion, keyParent, key, needRestart, threadInfo);
+                removeAndShrink<N48, N16>(n, v, parentNode, parentVersion, keyParent, key, needRestart);
                 break;
             }
             case NTypes::N256: {
                 auto n = static_cast<N256 *>(node);
-                removeAndShrink<N256, N48>(n, v, parentNode, parentVersion, keyParent, key, needRestart, threadInfo);
+                removeAndShrink<N256, N48>(n, v, parentNode, parentVersion, keyParent, key, needRestart);
                 break;
             }
         }

@@ -1,3 +1,4 @@
+#pragma once
 //
 // Created by florian on 18.11.15.
 //
@@ -21,7 +22,7 @@ namespace ART_OLC {
 
         LoadKeyFunction loadKey;
 
-        Epoche epoche{256};
+        // Epoche epoche{256};
 
     public:
         enum class CheckPrefixResult : uint8_t {
@@ -58,7 +59,10 @@ namespace ART_OLC {
 
     public:
 
+        Tree();
         Tree(LoadKeyFunction loadKey);
+
+        void setLoadKey(LoadKeyFunction f);
 
         Tree(const Tree &) = delete;
 
@@ -66,16 +70,14 @@ namespace ART_OLC {
 
         ~Tree();
 
-        ThreadInfo getThreadInfo();
-
-        TID lookup(const Key &k, ThreadInfo &threadEpocheInfo) const;
+        TID lookup(const Key &k) const;
 
         bool lookupRange(const Key &start, const Key &end, Key &continueKey, TID result[], std::size_t resultLen,
-                         std::size_t &resultCount, ThreadInfo &threadEpocheInfo) const;
+                         std::size_t &resultCount) const;
 
-        void insert(const Key &k, TID tid, ThreadInfo &epocheInfo);
+        void insert(const Key &k, TID tid, bool* new_insert);
 
-        void remove(const Key &k, TID tid, ThreadInfo &epocheInfo);
+        void remove(const Key &k, TID tid);
     };
 }
 #endif //ART_OPTIMISTICLOCK_COUPLING_N_H
