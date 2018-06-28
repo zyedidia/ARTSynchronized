@@ -2,7 +2,7 @@
 #include <algorithm>
 #include "Tree.h"
 #include "N.cpp"
-#include "Key.h"
+#include "../Key.h"
 
 
 namespace ART_OLC {
