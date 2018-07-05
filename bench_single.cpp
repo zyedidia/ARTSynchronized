@@ -6,12 +6,9 @@
 #include <vector>
 
 #define NTHREAD 10
-#define NVALS 1000000
-#define KEYSIZE 5
+#define NVALS 10000000
 
 ART_OLC::Tree art;
-std::string keys[NVALS];
-unsigned vals[NVALS];
 
 struct Element {
     std::string key;
@@ -70,5 +67,21 @@ int main() {
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::system_clock::now() - starttime);
         printf("lookup,%ld,%f\n", NVALS, (NVALS * 1.0) / duration.count());
+    }
+
+    {
+        auto starttime = std::chrono::system_clock::now();
+        for (int i = 0; i < NVALS; i++) {
+            auto v = intToBytes(i);
+            std::string str(v.begin(),v.end());
+            Key art_key;
+            art_key.set(str.c_str(), str.size());
+            Element* e = (Element*) art.lookup(art_key);
+            art.remove(art_key, (TID) e);
+        }
+
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::system_clock::now() - starttime);
+        printf("erase,%ld,%f\n", NVALS, (NVALS * 1.0) / duration.count());
     }
 }
