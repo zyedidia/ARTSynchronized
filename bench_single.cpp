@@ -4,11 +4,14 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <random>
 
-#define NTHREAD 10
-#define NVALS 10000000
+#define NVALS 1000000
+
+#define RAND 1
 
 ART_OLC::Tree art;
+uint64_t* keys;
 
 struct Element {
     std::string key;
@@ -30,6 +33,20 @@ std::vector<unsigned char> intToBytes(int paramInt)
 
 int main() {
     art.setLoadKey(loadKey);
+
+    keys = new uint64_t[NVALS];
+
+    std::mt19937 rng;
+    rng.seed(std::random_device()());
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0,(unsigned) -1);
+
+    for (uint64_t i = 0; i < NVALS; i++) {
+#ifdef RAND
+        keys[i] = dist(rng);
+#else
+        keys[i] = i;
+#endif
+    }
 
     // Build tree
     {
