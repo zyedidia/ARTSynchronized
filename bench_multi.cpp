@@ -7,10 +7,10 @@
 #include <vector>
 #include <random>
 
-#define NTHREAD 1
-#define NVALS 100000
+int nthread = 1;
+bool rand_keys = 0;
 
-#define RAND 1
+#define NVALS 10000000
 
 ART_OLC::Tree art;
 
@@ -35,7 +35,7 @@ std::vector<unsigned char> intToBytes(int paramInt)
 }
 
 void insertKey(int thread_id) {
-    for (int i = thread_id*(NVALS/NTHREAD); i < (thread_id+1)*NVALS/NTHREAD; i++) {
+    for (int i = thread_id*(NVALS/nthread); i < (thread_id+1)*NVALS/nthread; i++) {
         auto v = intToBytes(keys[i]);
         std::string str(v.begin(),v.end());
 
@@ -51,7 +51,7 @@ void insertKey(int thread_id) {
 }
 
 void lookupKey(int thread_id) {
-    for (int i = thread_id*(NVALS/NTHREAD); i < (thread_id+1)*NVALS/NTHREAD; i++) {
+    for (int i = thread_id*(NVALS/nthread); i < (thread_id+1)*NVALS/nthread; i++) {
         auto v = intToBytes(keys[i]);
         std::string str(v.begin(),v.end());
         Key art_key;
@@ -62,7 +62,7 @@ void lookupKey(int thread_id) {
 }
 
 void eraseKey(int thread_id) {
-    for (int i = thread_id*(NVALS/NTHREAD); i < (thread_id+1)*NVALS/NTHREAD; i++) {
+    for (int i = thread_id*(NVALS/nthread); i < (thread_id+1)*NVALS/nthread; i++) {
         auto v = intToBytes(keys[i]);
         std::string str(v.begin(),v.end());
         Key art_key;
@@ -72,7 +72,14 @@ void eraseKey(int thread_id) {
     }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc > 1) {
+        nthread = atoi(argv[1]);
+    }
+    if (argc > 2) {
+        rand_keys = atoi(argv[2]);
+    }
+
     art.setLoadKey(loadKey);
 
     keys = new uint64_t[NVALS];
@@ -82,22 +89,22 @@ int main() {
     std::uniform_int_distribution<std::mt19937::result_type> dist(0,(unsigned) -1);
 
     for (uint64_t i = 0; i < NVALS; i++) {
-#ifdef RAND
-        keys[i] = dist(rng);
-#else
-        keys[i] = i;
-#endif
+        if (rand_keys) {
+            keys[i] = dist(rng);
+        } else {
+            keys[i] = i;
+        }
     }
 
     // Build tree
     {
         auto starttime = std::chrono::system_clock::now();
-        std::thread threads[NTHREAD];
-        for (int i = 0; i < NTHREAD; i++) {
+        std::thread threads[nthread];
+        for (int i = 0; i < nthread; i++) {
             threads[i] = std::thread(insertKey, i);
         }
 
-        for (int i = 0; i < NTHREAD; i++) {
+        for (int i = 0; i < nthread; i++) {
             threads[i].join();
         }
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -107,12 +114,12 @@ int main() {
 
     {
         auto starttime = std::chrono::system_clock::now();
-        std::thread threads[NTHREAD];
-        for (int i = 0; i < NTHREAD; i++) {
+        std::thread threads[nthread];
+        for (int i = 0; i < nthread; i++) {
             threads[i] = std::thread(lookupKey, i);
         }
 
-        for (int i = 0; i < NTHREAD; i++) {
+        for (int i = 0; i < nthread; i++) {
             threads[i].join();
         }
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -122,12 +129,12 @@ int main() {
 
     {
         auto starttime = std::chrono::system_clock::now();
-        std::thread threads[NTHREAD];
-        for (int i = 0; i < NTHREAD; i++) {
+        std::thread threads[nthread];
+        for (int i = 0; i < nthread; i++) {
             threads[i] = std::thread(eraseKey, i);
         }
 
-        for (int i = 0; i < NTHREAD; i++) {
+        for (int i = 0; i < nthread; i++) {
             threads[i].join();
         }
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
