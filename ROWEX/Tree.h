@@ -21,7 +21,7 @@ namespace ART_ROWEX {
 
         LoadKeyFunction loadKey;
 
-        Epoche epoche{256};
+        // Epoche epoche{256};
 
     public:
         enum class CheckPrefixResult : uint8_t {
@@ -61,7 +61,10 @@ namespace ART_ROWEX {
 
     public:
 
+        Tree();
         Tree(LoadKeyFunction loadKey);
+
+        void setLoadKey(LoadKeyFunction f);
 
         Tree(const Tree &) = delete;
 
@@ -69,16 +72,16 @@ namespace ART_ROWEX {
 
         ~Tree();
 
-        ThreadInfo getThreadInfo();
+        // ThreadInfo getThreadInfo();
 
-        TID lookup(const Key &k, ThreadInfo &threadEpocheInfo) const;
+        TID lookup(const Key &k) const;
 
         bool lookupRange(const Key &start, const Key &end, Key &continueKey, TID result[], std::size_t resultLen,
-                         std::size_t &resultCount, ThreadInfo &threadEpocheInfo) const;
+                         std::size_t &resultCount) const;
 
-        void insert(const Key &k, TID tid, ThreadInfo &epocheInfo);
+        void insert(const Key &k, TID tid, bool* success);
 
-        void remove(const Key &k, TID tid, ThreadInfo &epocheInfo);
+        void remove(const Key &k, TID tid);
     };
 }
 #endif //ART_ROWEX_TREE_H

@@ -2,9 +2,16 @@
 #include <algorithm>
 #include "Tree.h"
 #include "N.cpp"
-#include "../Epoche.cpp"
+// #include "../Epoche.cpp"
+#include "../Key.h"
 
 namespace ART_ROWEX {
+    Tree::Tree() : root(new N256(0, {})) {
+    }
+
+    void Tree::setLoadKey(LoadKeyFunction f) {
+        loadKey = f;
+    }
 
     Tree::Tree(LoadKeyFunction loadKey) : root(new N256(0, {})), loadKey(loadKey) {
     }
@@ -14,12 +21,12 @@ namespace ART_ROWEX {
         N::deleteNode(root);
     }
 
-    ThreadInfo Tree::getThreadInfo() {
-        return ThreadInfo(this->epoche);
-    }
+    // ThreadInfo Tree::getThreadInfo() {
+    //     return ThreadInfo(this->epoche);
+    // }
 
-    TID Tree::lookup(const Key &k, ThreadInfo &threadEpocheInfo) const {
-        EpocheGuardReadonly epocheGuard(threadEpocheInfo);
+    TID Tree::lookup(const Key &k) const {
+        // EpocheGuardReadonly epocheGuard(threadEpocheInfo);
         N *node = root;
         uint32_t level = 0;
         bool optimisticPrefixMatch = false;
@@ -55,7 +62,7 @@ namespace ART_ROWEX {
     }
 
     bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, TID result[],
-                                std::size_t resultSize, std::size_t &resultsFound, ThreadInfo &threadEpocheInfo) const {
+                                std::size_t resultSize, std::size_t &resultsFound) const {
         for (uint32_t i = 0; i < std::min(start.getKeyLen(), end.getKeyLen()); ++i) {
             if (start[i] > end[i]) {
                 resultsFound = 0;
@@ -64,7 +71,7 @@ namespace ART_ROWEX {
                 break;
             }
         }
-        EpocheGuard epocheGuard(threadEpocheInfo);
+        // EpocheGuard epocheGuard(threadEpocheInfo);
         TID toContinue = 0;
         bool restart;
         std::function<void(const N *)> copy = [&result, &resultSize, &resultsFound, &toContinue, &copy](const N *node) {
@@ -240,8 +247,8 @@ namespace ART_ROWEX {
         return 0;
     }
 
-    void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo) {
-        EpocheGuard epocheGuard(epocheInfo);
+    void Tree::insert(const Key &k, TID tid, bool* success) {
+        // EpocheGuard epocheGuard(epocheInfo);
         restart:
         bool needRestart = false;
 
@@ -308,7 +315,7 @@ namespace ART_ROWEX {
                 node->lockVersionOrRestart(v, needRestart);
                 if (needRestart) goto restart;
 
-                N::insertAndUnlock(node, parentNode, parentKey, nodeKey, N::setLeaf(tid), epocheInfo, needRestart);
+                N::insertAndUnlock(node, parentNode, parentKey, nodeKey, N::setLeaf(tid), needRestart);
                 if (needRestart) goto restart;
                 return;
             }
@@ -337,8 +344,7 @@ namespace ART_ROWEX {
         }
     }
 
-    void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
-        EpocheGuard epocheGuard(threadInfo);
+    void Tree::remove(const Key &k, TID tid) {
         restart:
         bool needRestart = false;
 
@@ -399,7 +405,7 @@ namespace ART_ROWEX {
 
                                 parentNode->writeUnlock();
                                 node->writeUnlockObsolete();
-                                this->epoche.markNodeForDeletion(node, threadInfo);
+                                // this->epoche.markNodeForDeletion(node, threadInfo);
                             } else {
                                 uint64_t vChild = secondNodeN->getVersion();
                                 secondNodeN->lockVersionOrRestart(vChild, needRestart);
@@ -420,11 +426,11 @@ namespace ART_ROWEX {
 
                                 parentNode->writeUnlock();
                                 node->writeUnlockObsolete();
-                                this->epoche.markNodeForDeletion(node, threadInfo);
+                                // this->epoche.markNodeForDeletion(node, threadInfo);
                                 secondNodeN->writeUnlock();
                             }
                         } else {
-                            N::removeAndUnlock(node, k[level], parentNode, parentKey, threadInfo, needRestart);
+                            N::removeAndUnlock(node, k[level], parentNode, parentKey, needRestart);
                             if (needRestart) goto restart;
                         }
                         return;

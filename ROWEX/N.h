@@ -102,11 +102,11 @@ namespace ART_ROWEX {
         static N *getChild(const uint8_t k, N *node);
 
         static void insertAndUnlock(N *node, N *parentNode, uint8_t keyParent, uint8_t key, N *val,
-                                    ThreadInfo &threadInfo, bool &needRestart);
+                                    bool &needRestart);
 
         static void change(N *node, uint8_t key, N *val);
 
-        static void removeAndUnlock(N *node, uint8_t key, N *parentNode, uint8_t keyParent, ThreadInfo &threadInfo, bool &needRestart);
+        static void removeAndUnlock(N *node, uint8_t key, N *parentNode, uint8_t keyParent, bool &needRestart);
 
         Prefix getPrefi() const;
 
@@ -131,13 +131,13 @@ namespace ART_ROWEX {
         static std::tuple<N *, uint8_t> getSecondChild(N *node, const uint8_t k);
 
         template<typename curN, typename biggerN>
-        static void insertGrow(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, N *val, ThreadInfo &threadInfo, bool &needRestart);
+        static void insertGrow(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, N *val, bool &needRestart);
 
         template<typename curN>
-        static void insertCompact(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, N *val, ThreadInfo &threadInfo, bool &needRestart);
+        static void insertCompact(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, N *val, bool &needRestart);
 
         template<typename curN, typename smallerN>
-        static void removeAndShrink(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, ThreadInfo &threadInfo, bool &needRestart);
+        static void removeAndShrink(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, bool &needRestart);
 
         static void getChildren(const N *node, uint8_t start, uint8_t end, std::tuple<uint8_t, N *> children[],
                                 uint32_t &childrenCount);

@@ -1,4 +1,4 @@
-#include "OptimisticLockCoupling/Tree.h"
+#include "ROWEX/Tree.h"
 
 #include <thread>
 #include <chrono>
@@ -12,7 +12,7 @@ bool rand_keys = 0;
 
 #define NVALS 10000000
 
-ART_OLC::Tree art;
+ART_ROWEX::Tree art;
 
 uint64_t* keys;
 

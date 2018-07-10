@@ -106,7 +106,7 @@ namespace ART_ROWEX {
     }
 
     template<typename curN, typename biggerN>
-    void N::insertGrow(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, N *val, ThreadInfo &threadInfo, bool &needRestart) {
+    void N::insertGrow(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, N *val, bool &needRestart) {
         if (n->insert(key, val)) {
             n->writeUnlock();
             return;
@@ -126,11 +126,11 @@ namespace ART_ROWEX {
         parentNode->writeUnlock();
 
         n->writeUnlockObsolete();
-        threadInfo.getEpoche().markNodeForDeletion(n, threadInfo);
+        // threadInfo.getEpoche().markNodeForDeletion(n, threadInfo);
     }
 
     template<typename curN>
-    void N::insertCompact(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, N *val, ThreadInfo &threadInfo, bool &needRestart) {
+    void N::insertCompact(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, N *val, bool &needRestart) {
         auto nNew = new curN(n->getLevel(), n->getPrefi());
         n->copyTo(nNew);
         nNew->insert(key, val);
@@ -146,36 +146,36 @@ namespace ART_ROWEX {
         parentNode->writeUnlock();
 
         n->writeUnlockObsolete();
-        threadInfo.getEpoche().markNodeForDeletion(n, threadInfo);
+        // threadInfo.getEpoche().markNodeForDeletion(n, threadInfo);
     }
 
-    void N::insertAndUnlock(N *node, N *parentNode, uint8_t keyParent, uint8_t key, N *val, ThreadInfo &threadInfo, bool &needRestart) {
+    void N::insertAndUnlock(N *node, N *parentNode, uint8_t keyParent, uint8_t key, N *val, bool &needRestart) {
         switch (node->getType()) {
             case NTypes::N4: {
                 auto n = static_cast<N4 *>(node);
                 if (n->compactCount == 4 && n->count <= 3) {
-                    insertCompact<N4>(n, parentNode, keyParent, key, val, threadInfo, needRestart);
+                    insertCompact<N4>(n, parentNode, keyParent, key, val, needRestart);
                     break;
                 }
-                insertGrow<N4, N16>(n, parentNode, keyParent, key, val, threadInfo, needRestart);
+                insertGrow<N4, N16>(n, parentNode, keyParent, key, val, needRestart);
                 break;
             }
             case NTypes::N16: {
                 auto n = static_cast<N16 *>(node);
                 if (n->compactCount == 16 && n->count <= 14) {
-                    insertCompact<N16>(n, parentNode, keyParent, key, val, threadInfo, needRestart);
+                    insertCompact<N16>(n, parentNode, keyParent, key, val, needRestart);
                     break;
                 }
-                insertGrow<N16, N48>(n, parentNode, keyParent, key, val, threadInfo, needRestart);
+                insertGrow<N16, N48>(n, parentNode, keyParent, key, val, needRestart);
                 break;
             }
             case NTypes::N48: {
                 auto n = static_cast<N48 *>(node);
                 if (n->compactCount == 48 && n->count != 48) {
-                    insertCompact<N48>(n, parentNode, keyParent, key, val, threadInfo, needRestart);
+                    insertCompact<N48>(n, parentNode, keyParent, key, val, needRestart);
                     break;
                 }
-                insertGrow<N48, N256>(n, parentNode, keyParent, key, val, threadInfo, needRestart);
+                insertGrow<N48, N256>(n, parentNode, keyParent, key, val, needRestart);
                 break;
             }
             case NTypes::N256: {
@@ -241,7 +241,7 @@ namespace ART_ROWEX {
     }
 
     template<typename curN, typename smallerN>
-    void N::removeAndShrink(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, ThreadInfo &threadInfo, bool &needRestart) {
+    void N::removeAndShrink(curN *n, N *parentNode, uint8_t keyParent, uint8_t key, bool &needRestart) {
         if (n->remove(key, parentNode == nullptr)) {
             n->writeUnlock();
             return;
@@ -262,10 +262,10 @@ namespace ART_ROWEX {
 
         parentNode->writeUnlock();
         n->writeUnlockObsolete();
-        threadInfo.getEpoche().markNodeForDeletion(n, threadInfo);
+        // threadInfo.getEpoche().markNodeForDeletion(n, threadInfo);
     }
 
-    void N::removeAndUnlock(N *node, uint8_t key, N *parentNode, uint8_t keyParent, ThreadInfo &threadInfo, bool &needRestart) {
+    void N::removeAndUnlock(N *node, uint8_t key, N *parentNode, uint8_t keyParent, bool &needRestart) {
         switch (node->getType()) {
             case NTypes::N4: {
                 auto n = static_cast<N4 *>(node);
@@ -275,17 +275,17 @@ namespace ART_ROWEX {
             }
             case NTypes::N16: {
                 auto n = static_cast<N16 *>(node);
-                removeAndShrink<N16, N4>(n, parentNode, keyParent, key, threadInfo, needRestart);
+                removeAndShrink<N16, N4>(n, parentNode, keyParent, key, needRestart);
                 break;
             }
             case NTypes::N48: {
                 auto n = static_cast<N48 *>(node);
-                removeAndShrink<N48, N16>(n, parentNode, keyParent, key, threadInfo, needRestart);
+                removeAndShrink<N48, N16>(n, parentNode, keyParent, key, needRestart);
                 break;
             }
             case NTypes::N256: {
                 auto n = static_cast<N256 *>(node);
-                removeAndShrink<N256, N48>(n, parentNode, keyParent, key, threadInfo, needRestart);
+                removeAndShrink<N256, N48>(n, parentNode, keyParent, key, needRestart);
                 break;
             }
         }
